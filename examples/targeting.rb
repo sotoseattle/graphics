@@ -3,8 +3,6 @@
 require "graphics"
 
 class TargetSimulation < Graphics::Simulation
-  CLEAR_COLOR = :darker_green
-
   attr_accessor :bombs
 
   def initialize
@@ -22,7 +20,7 @@ class TargetSimulation < Graphics::Simulation
   end
 
   def draw n
-    clear
+    clear :darker_green
 
     bombs.each do |(birth, bx, by)|
       r = n - birth

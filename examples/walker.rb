@@ -10,10 +10,10 @@ class Person < Graphics::Body
   D_M = 0.25
   M_M = 5.0
 
-  attr_accessor :trail
+  attr_accessor :trail, :ga
 
   def initialize w
-    super
+    super w
 
     self.trail = Graphics::Trail.new w, 100, :green
 
@@ -25,16 +25,45 @@ class Person < Graphics::Body
     turn_towards_goal
     possibly_change_goal
 
-    accelerate
-    move
+    move &:clip_off
 
     trail << self
+  end
 
-    clip_off_wall
+  def clip_off
+    accelerate
+
+    wall_vectors.each do |v|
+      cone = random_turn 90
+      case v.a
+      when EAST
+        self.x = 0
+        self.ga = cone
+      when WEST
+        self.x = w.w
+        self.ga = 180 + cone
+      when NORTH
+        self.y = 0
+        self.ga = 90 + cone
+      when SOUTH
+        self.y = w.h
+        self.ga = -90 + cone
+      end
+      self.apply v
+    end
   end
 
   def accelerate
     self.m += D_M unless m >= M_M
+  end
+
+  def draw
+    trail.draw
+
+    w.angle x, y, ga, 60, :red
+
+    # the blit looks HORRIBLE when rotated... dunno why
+    w.blit w.body_img, x, y
   end
 
   def turn_towards_goal
@@ -57,17 +86,6 @@ class Person < Graphics::Body
     self.a = (a + 180).degrees
     change_goal
   end
-
-  class View
-    def self.draw w, b
-      b.trail.draw
-
-      w.angle b.x, b.y, b.ga, 60, :red
-
-      # the blit looks HORRIBLE when rotated... dunno why
-      w.blit w.body_img, b.x, b.y
-    end
-  end
 end
 
 class WalkerSimulation < Graphics::Simulation
@@ -77,7 +95,6 @@ class WalkerSimulation < Graphics::Simulation
     super 850, 850, 16, "Walker"
 
     self.ps = populate Person
-    register_bodies ps
 
     self.body_img = sprite 20, 20 do
       circle 10, 10, 5, :white, :filled
@@ -87,14 +104,14 @@ class WalkerSimulation < Graphics::Simulation
   end
 
   def update n
-    super
-
+    ps.each(&:update)
     detect_collisions(ps).each(&:collide)
   end
 
   def draw n
-    super
+    clear
 
+    ps.each(&:draw)
     fps n
   end
 

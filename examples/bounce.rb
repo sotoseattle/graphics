@@ -5,44 +5,35 @@ require "graphics"
 class Ball < Graphics::Body
   COUNT = 50
 
-  G = V[0, -18 / 60.0]
-
-  attr_accessor :g
-
-  def initialize w
+  def initialize env
     super
 
     self.a = random_angle / 2
     self.m = rand 25
-    self.g = G
   end
 
   def update
-    fall
-    move
-    bounce
-  end
-
-  def fall
-    self.velocity += g
+    apply env.gravity
+    move(&:bounce)
   end
 
   class View
-    def self.draw w, b
-      w.angle b.x, b.y, b.a, 10+3*b.m, :red
-      w.circle b.x, b.y, 5, :white, :filled
+    def self.draw w, o
+      w.angle o.x, o.y, o.a, 10+3*o.m, :red
+      w.circle o.x, o.y, 5, :white, :filled
     end
   end
+
 end
 
 class BounceSimulation < Graphics::Simulation
-  attr_accessor :bs
+  attr_accessor :gravity
 
   def initialize
     super 640, 640, 16, "Bounce"
 
-    self.bs = populate Ball
-    register_bodies bs
+    self.env.gravity = Graphics::V.new a:-90, m:(3 / 10.0)
+    register_bodies populate Ball
   end
 
   def initialize_keys
@@ -51,28 +42,21 @@ class BounceSimulation < Graphics::Simulation
     add_keydown_handler "r", &:reverse
   end
 
-  def draw n
-    super
-    fps n
-  end
-
   def randomize
-    bs.each do |b|
+    self.env._bodies.each do |b|
       b.m = rand(25)
       b.a = b.random_angle / 2
     end
   end
 
   def reverse
-    bs.each do |b|
-      b.g *= -1
-    end
+    self.env.gravity.turn 180
   end
 
   LOG_INTERVAL = 120
 
   def log
-    puts bs.map(&:m).inject(&:+)
+    puts self.env._bodies.flatten.map(&:m).inject(&:+)
   end
 end
 

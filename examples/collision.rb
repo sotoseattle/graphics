@@ -2,74 +2,73 @@
 
 require "graphics"
 
-class Sprite < Graphics::Body
+class Tank < Graphics::Body
   COUNT = 8
 
-  attr_accessor :image
+  attr_accessor :sprite, :cmap, :updated
 
-  def initialize w
-    super w
+  def initialize e
+    super e
 
     self.a = random_angle
     self.m = 5
+    self.updated = false
+  end
+
+  def spritify img
+    self.sprite = img
+    self.cmap = img.make_collision_map
   end
 
   def update
-    move
-    bounce
+    move(&:bounce)
+    self.updated = false
   end
 
-  def collide
-    self.a = (a + 180).degrees
+  def detect
+    if !self.updated
+      crashing = env._bodies.flatten.select { |t| collide_with? t }
+
+      crashing.each(&:veer) if crashing.size > 1
+    end
+  end
+
+  def veer
+    turn 180
+    self.updated = false
   end
 
   def collide_with? other
-    w.cmap.check(x, y, w.cmap, other.x, other.y)
+    self.cmap.check self.endpoint.x, self.endpoint.y,  \
+                    other.cmap,                        \
+                    other.endpoint.x, other.endpoint.y
   end
 
   class View
-    def self.draw w, b
-      w.blit b.image, b.x, b.y, b.a
+    def self.draw w, o
+      w.blit o.sprite, o.x, o.y, o.a
+      w.fps o.env.n, o.env.start_time
     end
   end
 end
 
 class Collision < Graphics::Simulation
-  attr_accessor :sprites, :cmap, :tank_img
-
   def initialize
-    super 850, 850, 16, "Collision"
+    super 800, 800, 16, "Collision"
 
-    self.tank_img = image "resources/images/body.png"
-    self.cmap = tank_img.make_collision_map
+    tank_img = image "resources/images/body.png"
 
-    self.sprites = populate Sprite do |s|
-      s.image = tank_img
-    end
+    register_bodies  populate(Tank) { |b| b.spritify tank_img }
+  end
 
-    register_bodies sprites
+  def update n
+    env.n = n
+    env._bodies.each { |ary| ary.each(&:detect) }
+               .each { |ary| ary.each(&:update) }
   end
 
   def inspect
     "<Screen ...>"
-  end
-
-  def detect_collisions sprites
-    collisions = []
-    sprites.combination(2).each do |a, b|
-      collisions << a << b if a.collide_with? b
-    end
-    collisions.uniq
-  end
-
-  def update n
-    super
-    detect_collisions(sprites).each(&:collide)
-  end
-
-  def draw n
-    super
-    fps n
   end
 end
 

@@ -1,5 +1,7 @@
 #!/usr/bin/ruby -w
 
+srand 42
+
 require "graphics"
 
 class Array

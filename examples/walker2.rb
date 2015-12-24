@@ -1,5 +1,7 @@
 #!/usr/local/bin/ruby -w
 
+# srand 42
+
 require "graphics"
 require "graphics/trail"
 
@@ -15,7 +17,7 @@ class Person < Graphics::Body
   VISIBILITY_SQ      = VISIBILITY**2
   ATTACK_DISTANCE_SQ = ATTACK_DISTANCE**2
 
-  attr_accessor :attack, :debug
+  attr_accessor :attack, :debug, :ga
   alias attack? attack
   alias debug? debug
 
@@ -25,7 +27,7 @@ class Person < Graphics::Body
     self.a  = random_angle
     self.ga = random_angle
     self.attack = false
-    self.debug = false
+    self.debug  = false
   end
 
   def update
@@ -49,7 +51,7 @@ class Person < Graphics::Body
   end
 
   def visible? o
-    pa = self.angle_to o
+    pa = angle_to o
     da = (pa - self.a + 90).degrees
     da.between?(75, 150)
   end
@@ -59,7 +61,7 @@ class Person < Graphics::Body
                   all_but_me = w.ps.reject(&:attack?)
                   nearby     = all_but_me.find_all { |p| self.near? p }
                   visible    = nearby.select { |p| self.visible? p }
-                  visible.sort_by { |p| self.distance_to_squared(p) }
+                  visible.sort_by { |p| distance_to_squared(p) }
                 end
   end
 
@@ -67,12 +69,12 @@ class Person < Graphics::Body
     @nearby = nil
 
     nearby.each do |p|
-      dist = self.distance_to_squared(p)
+      dist = distance_to_squared(p)
 
       if dist <= ATTACK_DISTANCE_SQ then
         p.kill
       else
-        self.ga = self.angle_to(nearby.first)
+        self.ga = angle_to(nearby.first)
       end
     end
 
@@ -86,6 +88,26 @@ class Person < Graphics::Body
   def accelerate
     max = attack ? 1.1 * M_M : M_M
     self.m += D_M unless m >= max
+  end
+
+  def draw
+    if debug? and attack? then
+      w.angle x, y, a-75, VISIBILITY, :yellow
+      w.angle x, y, a-25, VISIBILITY, :yellow
+      w.angle x, y, a+25, VISIBILITY, :yellow
+      w.angle x, y, a+75, VISIBILITY, :yellow
+      nearby.each do |o|
+        w.line x, y, o.x, o.y, :yellow
+      end
+      # sleep 0.25 unless nearby.empty?
+    end
+
+    w.angle x, y,  a,   20, :green
+    w.angle x, y, ga,   10, :red
+
+    # the blit looks HORRIBLE when rotated... dunno why
+    w.blit w.body_img, x, y
+    w.circle x, y, 5, :red, :filled if attack?
   end
 
   def turn_towards_goal
@@ -111,30 +133,6 @@ class Person < Graphics::Body
     self.a = (a + 180).degrees
     change_goal
   end
-
-  class View
-    def self.draw w, b
-      x, y, a, ga = b.x, b.y, b.a, b.ga
-
-      if b.debug? and b.attack? then
-        w.angle x, y, a-75, VISIBILITY, :yellow
-        w.angle x, y, a-25, VISIBILITY, :yellow
-        w.angle x, y, a+25, VISIBILITY, :yellow
-        w.angle x, y, a+75, VISIBILITY, :yellow
-        b.nearby.each do |o|
-          w.line x, y, o.x, o.y, :yellow
-        end
-        # sleep 0.25 unless nearby.empty?
-      end
-
-      w.angle x, y,  a,   20, :green
-      w.angle x, y, ga,   10, :red
-
-      # the blit looks HORRIBLE when rotated... dunno why
-      w.blit w.body_img, x, y
-      w.circle x, y, 5, :red, :filled if b.attack?
-    end
-  end
 end
 
 class WalkerSimulation < Graphics::Simulation
@@ -144,7 +142,6 @@ class WalkerSimulation < Graphics::Simulation
     super 850, 850, 16, "Walker"
 
     self.ps = populate Person, 2
-    register_bodies ps
 
     # 5.times do |n|
     #   ps[n].attack = true
@@ -171,8 +168,7 @@ class WalkerSimulation < Graphics::Simulation
   end
 
   def update n
-    super
-
+    ps.each(&:update)
     detect_collisions(ps).each do |a, b|
       a.collide b
     end
@@ -181,7 +177,9 @@ class WalkerSimulation < Graphics::Simulation
   end
 
   def draw n
-    super
+    clear
+
+    ps.each(&:draw)
 
     debug "#{ps.size}"
     fps n

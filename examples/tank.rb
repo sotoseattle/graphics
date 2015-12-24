@@ -20,7 +20,7 @@ class Tank < Graphics::Body
   attr_accessor :e
 
   def initialize w
-    super
+    super w
 
     self.x = w.w / 2
     self.y = w.h / 2
@@ -33,9 +33,8 @@ class Tank < Graphics::Body
     self.e += TICK_ENERGY
 
     t.update x, y
-    move
     limit
-    clip
+    move &:bounce
   end
 
   def limit
@@ -55,11 +54,9 @@ class Tank < Graphics::Body
     end
   end
 
-  class View
-    def self.draw w, b
-      w.blit w.body_img, b.x, b.y, b.a
-      Turret::View.draw w, b.t
-    end
+  def draw
+    w.blit w.body_img, x, y, a
+    t.draw
   end
 
   def turn_right; turn(-ROTATION); aim_right; end
@@ -74,11 +71,10 @@ end
 
 class Turret < Graphics::Body
   def initialize tank
-    self.w = tank.w
-    self.x = tank.x
-    self.y = tank.y
-    self.a = tank.a
+    super tank.w
+    self.position = tank.position
     self.m = tank.m
+    self.a = tank.a
   end
 
   def fire
@@ -91,10 +87,8 @@ class Turret < Graphics::Body
     self.y = y
   end
 
-  class View
-    def self.draw w, b
-      w.blit w.turret_img, b.x, b.y, b.a
-    end
+  def draw
+    w.blit w.turret_img, x, y, a
   end
 end
 
@@ -113,11 +107,9 @@ class Bullet < Graphics::Body
     w.bullets.delete self if clip
   end
 
-  class View
-    def self.draw w, b
-      w.rect b.x, b.y, 2, 2, :white
-      w.debug "%.2f", b.m
-    end
+  def draw
+    w.rect x, y, 2, 2, :white
+    w.debug "%.2f", m
   end
 end
 
@@ -131,9 +123,6 @@ class TargetSimulation < Graphics::Simulation
 
     self.tank = Tank.new self
     self.bullets = []
-
-    register_body tank
-    register_bodies bullets
 
     self.body_img   = image "resources/images/body.png"
     self.turret_img = image "resources/images/turret.png"
@@ -151,9 +140,16 @@ class TargetSimulation < Graphics::Simulation
     add_key_handler(:SPACE)     { tank.fire }
   end
 
-  def draw n
-    super
+  def update n
+    tank.update
 
+    bullets.each(&:update)
+  end
+
+  def draw n
+    clear
+    tank.draw
+    bullets.each(&:draw)
     fps n
   end
 end

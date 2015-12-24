@@ -3,8 +3,6 @@
 require "graphics"
 
 class MathSimulation < Graphics::Simulation
-  CLEAR_COLOR = :white
-
   def initialize
     super 640, 640, 16, "Math"
   end
@@ -26,7 +24,7 @@ class MathSimulation < Graphics::Simulation
   end
 
   def graph_paper
-    clear
+    clear :white
 
     hline 1, :black
     vline 0, :black

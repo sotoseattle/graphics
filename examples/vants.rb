@@ -1,6 +1,8 @@
 #!/usr/local/bin/ruby -w
 # -*- coding: utf-8 -*-
 
+srand 42
+
 require "graphics"
 
 ##
@@ -14,15 +16,16 @@ class Vant < Graphics::Body
 
   def initialize w
     super
-    self.a = random_angle
     self.s = w.screen
+    self.a = random_angle
+    self.m = M
 
     self.white = w.color[:white]
     self.black = w.color[:black]
   end
 
-  def update
-    move_by a, M
+  def forward
+    move
     mutate
   end
 
@@ -37,16 +40,30 @@ class Vant < Graphics::Body
   end
 end
 
-class Vants < Graphics::Drawing
+class Vants < Graphics::Simulation
   attr_accessor :vs
-
-  CLEAR_COLOR = :white
 
   def initialize
     super 850, 850, 16, self.class.name
 
+    # cheat and reopen screen w/o double buffering
+    self.screen = SDL::Screen.open 850, 850, 16, SDL::HWSURFACE
+    clear :white
+
     self.vs = populate Vant
-    register_bodies vs
+  end
+
+  def update n
+    vs.each(&:forward)
+  end
+
+  def draw_and_flip n
+    self.draw n
+    # no flip
+  end
+
+  def draw n
+    screen.update 0, 0, 0, 0
   end
 end
 

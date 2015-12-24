@@ -4,27 +4,31 @@
 require "graphics"
 
 class Boid < Graphics::Body
-  COUNT = 50
+  attr_accessor :img
+
+  COUNT = 90
 
   PCT_DAMPENER = 0.01
   TOO_CLOSE    = 50
   MAX_VELOCITY = 5
 
-  @@max_distance = 100
+  def initialize w, img
+    super w
 
-  def self.max_distance= n
-    @@max_distance = n
-  end
-
-  def self.max_distance
-    @@max_distance
-  end
-
-  def initialize w
-    super
-
+    self.a = rand 360
     self.m = rand(20)
-    self.a = random_angle
+
+    self.img = img
+    self.env.max_distance = 100
+  end
+
+  class View
+    def self.draw w, o
+      # the blit looks HORRIBLE when rotated... dunno why
+      w.circle o.x, o.y, o.env.max_distance, :gray if o.env.visual_debug
+      w.blit o.img, o.x, o.y
+      w.angle o.x, o.y, o.a, 3 * o.m, :red
+    end
   end
 
   def label
@@ -33,14 +37,10 @@ class Boid < Graphics::Body
   end
 
   def update
-    v1 = rule1
-    v2 = rule2
-    v3 = rule3
-
-    self.velocity += v1 + v2 + v3
-    limit_velocity
-    self.position += self.velocity
-
+    r = rule1 + rule2 + rule3
+    self.apply r
+    limit_velocity r
+    move
     wrap
 
     @nearby = nil
@@ -49,31 +49,15 @@ class Boid < Graphics::Body
   def nearby
     @nearby ||= begin
                   p = self.position
-                  w.boids.find_all { |b| (b.position - p).magnitude.abs < @@max_distance }
+                  self.env._bodies.flatten.find_all do |b|
+                    b != self &&
+                    (b.position - p).magnitude.abs < env.max_distance
+                  end
                 end
   end
 
-  def limit_velocity
-    if velocity.magnitude > MAX_VELOCITY then
-      self.velocity = (self.velocity / self.velocity.magnitude) * MAX_VELOCITY
-    end
-  end
-
-  def center_mass
-    pos = V::ZERO
-    nearby.each do |b|
-      next if self == b
-
-      pos += b.position
-    end
-
-    size = nearby.size - 1
-
-    return self.position if size == 0
-
-    pos /= size
-
-    pos
+  def limit_velocity v2
+    self.m = MAX_VELOCITY if self.m > MAX_VELOCITY
   end
 
   ##
@@ -128,7 +112,13 @@ class Boid < Graphics::Body
   # Thus we have calculated the first vector offset, v1, for the boid.
 
   def rule1
-    (center_mass - self.position) * PCT_DAMPENER
+    return Graphics::V.new if nearby.empty?
+
+    center_mass = nearby.map(&:position).reduce(:+) / nearby.size
+
+    r1 = Graphics::V.new
+    r1.endpoint = (center_mass - self.position) * PCT_DAMPENER
+    r1
   end
 
   ##
@@ -180,12 +170,10 @@ class Boid < Graphics::Body
   # enough apart for our liking.
 
   def rule2
-    c = V::ZERO
-
+    c = XY::ZERO
     hits = 0
 
     nearby.each do |b|
-      next if self == b
       diff = b.position - self.position
       next unless diff.magnitude.abs < TOO_CLOSE
       hits += 1
@@ -194,7 +182,9 @@ class Boid < Graphics::Body
 
     c /= hits unless hits == 0 # average it out so they don't overdo it
 
-    c / 8
+    r2 = Graphics::V.new
+    r2.endpoint = c/8
+    r2
   end
 
   ##
@@ -222,64 +212,35 @@ class Boid < Graphics::Body
   #   END PROCEDURE
 
   def rule3
-    v = V::ZERO
-
-    nearby.each do |b|
-      next if self == b
-      v += b.velocity
-    end
+    r3 = Graphics::V.new
+    nearby.each { |bv| r3.apply bv }
 
     size = nearby.size - 1
+    return self if size == 0
 
-    return self.velocity if size == 0
-
-    v /= size unless size == 0
-
-    (v - self.velocity) / 4
-  end
-
-  class View
-    def self.draw w, b
-      x, y, a, m = b.x, b.y, b.a, b.m
-
-      w.circle x, y, @@max_distance, :gray if w.visual_debug?
-      w.blit w.body_img, x, y # the blit looks HORRIBLE when rotated... dunno why
-      w.angle x, y, a, 3 * m, :red
-    end
+    r3.m /= (4 * size)
+    r3
   end
 end
 
 class Boids < Graphics::Simulation
-  attr_accessor :boids, :body_img, :cmap, :visual_debug
-
-  alias :visual_debug? :visual_debug
-
   def initialize
     super 850, 850, 16, "Boid"
 
-    self.visual_debug = false
+    self.env.visual_debug = true
 
-    self.boids = populate Boid
-    register_bodies boids
-
-    self.body_img = sprite 20, 20 do
-      circle 10, 10, 5, :white, :filled
+    body_img = canvas.sprite 20, 20 do
+      canvas.circle 10, 10, 5, :white, :filled
     end
+    self.env._bodies << Array.new(50) { Boid.new self.env, body_img }
   end
 
   def initialize_keys
     super
 
-    add_key_handler(:D) { self.visual_debug = ! visual_debug }
+    add_key_handler(:D) { self.env.visual_debug = ! visual_debug }
     add_key_handler(:B) { Boid.max_distance += 5 }
     add_key_handler(:S) { Boid.max_distance -= 5 }
-  end
-
-  def draw n
-    super
-
-    debug "r = #{Boid.max_distance}" if visual_debug?
-    fps n
   end
 end
 
