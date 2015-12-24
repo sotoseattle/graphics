@@ -7,6 +7,8 @@ srand 42
 require "graphics"
 
 module GOL
+  @@neighbors = Hash.new { |h, k| h[k] = {} }
+
   def self.tick old_cells
     new_cells = {}
 
@@ -26,7 +28,7 @@ module GOL
 
   def self.neighbors cell
     x, y = cell
-    [x + 1, x, x - 1].product([y - 1, y, y + 1]) - [[x, y]]
+    @@neighbors[x][y] ||= [x + 1, x, x - 1].product([y - 1, y, y + 1]) - [[x, y]]
   end
 end
 
