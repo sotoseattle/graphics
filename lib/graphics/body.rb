@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
-require "graphics/v"
-require "graphics/extensions"
+# require "graphics/v"
+# require "graphics/extensions"
+require_relative "./v"
+require_relative "./extensions"
 
 ##
 # A body in the simulation.
@@ -40,67 +42,9 @@ class Graphics::Body < Graphics::V
 
   ##
   # Hop along the vector, so the endpoint becomes the new position.
-  # Optionally pass a block to modify the body's vector before moving.
 
-  def move &pre_block
-    pre_block.yield(self) if block_given?
-
+  def move
     self.position = endpoint
-  end
-
-  ##
-  # Check see if the vector's endpoint is beyond the window boundaries.
-  # If out of bounds, return the rebounding vector of the wall it hit.
-
-  def wall_vectors
-    max_h, max_w = env.h, env.w
-    normals = []
-
-    x2, y2 = endpoint.to_a
-    dx, dy = dx_dy.to_a
-
-    if x2 < 0 then
-      normals << Graphics::V.new(a:EAST, m:-dx)
-    elsif x2 > max_w then
-      normals << Graphics::V.new(a:WEST, m:dx)
-    end
-
-    if y2 < 0 then
-      normals << Graphics::V.new(a:NORTH, m:-dy)
-    elsif y2 > max_h then
-      normals << Graphics::V.new(a:SOUTH, m:dy)
-    end
-
-    normals
-  end
-
-  ##
-  # Optional block when moving to keep body in bounds of the window. If out of
-  # bounds, take body to the limit and apply a vector equal to it, and in the
-  # opposite direction (in effect annulling its magnitude).
-
-  def bound
-    wall_vectors.each do |u|
-      case u.a
-      when EAST  then self.x = 0
-      when WEST  then self.x = env.w
-      when NORTH then self.y = 0
-      when SOUTH then self.y = env.h
-      end
-      self.apply u
-    end
-  end
-
-  ##
-  # Optional block when moving to keep the body in bounds of the window,
-  # bouncing off the walls. At wall the body encounters an opposite vector
-  # twice its magnitude (minus friction) so in effect, rebounds.
-
-  def bounce
-    wall_vectors.each do |u|
-      u.m *= 1.9
-      self.apply u
-    end
   end
 
   ##

@@ -2,7 +2,8 @@
 
 require "sdl/sdl"
 require "ostruct"
-require "graphics/canvas"
+# require "graphics/canvas"
+require_relative "./canvas"
 
 module SDL; end # :nodoc: -- stupid rdoc :(
 
@@ -58,7 +59,7 @@ class Graphics::AbstractSimulation
 
     self.canvas = Canvas.new w, h, bpp, name, self.class::SCREEN_FLAGS|full
 
-    self.env = OpenStruct.new :w => w, :h => h, :_bodies => []
+    self.env = OpenStruct.new :w => w, :h => h, :_bodies => [], :lines => []
 
     self.paused = false
     self.iter_per_tick = 1
@@ -220,6 +221,16 @@ class Graphics::AbstractSimulation
 
   def clear c = :black
     canvas.fast_rect 0, 0, env.w, env.h, c
+  end
+
+  ##
+  # Add walls to simulation environment
+
+  def add_walls
+    self.env.lines << Wall.new(XY[0.0, 0.0],   XY[env.w, 0.0])       \
+                   << Wall.new(XY[0.0, env.h], XY[env.w, env.h]) \
+                   << Wall.new(XY[0.0, 0.0],   XY[0.0, env.h])       \
+                   << Wall.new(XY[env.w, 0.0], XY[env.w, env.h])
   end
 
   ### Blitting Methods:

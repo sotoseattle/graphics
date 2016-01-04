@@ -1,4 +1,5 @@
-# Axial projection of coordinates in 2D.
+# A Point in 2D defined by its axial projections.
+# require 'geometry'
 
 class XY
 
@@ -16,7 +17,7 @@ class XY
   end
 
   ##
-  # Create a new axial projection with x & y segments.
+  # Create a new point with x & y coordinates.
 
   def initialize x, y
     @x = x
@@ -62,18 +63,17 @@ class XY
   end
 
   ##
-  # Return the distance from the origin to the projected point.
+  # Distance to another point
 
-  def magnitude
-    Math.sqrt(x*x + y*y)
+  def distance_to q
+    Math.hypot x - q.x, y - q.y
   end
 
   ##
-  # Return the distance to another point, squared.
+  # Return the distance from the origin to the projected point.
 
-  def distance_to_squared p2
-    dxy = p2 - self
-    dxy.x ** 2 + dxy.y ** 2
+  def dist_to_origin
+    Math.sqrt(x*x + y*y)
   end
 
   ##

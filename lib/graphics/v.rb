@@ -1,7 +1,9 @@
 # Simple and fast 2D vector
 
 # require "graphics/xy"
+# require "graphics/segment"
 require_relative "./xy"
+require_relative "./segment"
 
 class Graphics::V
 
@@ -62,10 +64,20 @@ class Graphics::V
   end
 
   ##
+  # Vector's axial projection at angle.
+
+  # def proj alpha # :nodoc:
+  #   rad = alpha * D2R
+  #   dx = Math.cos(rad) * m
+  #   dy = Math.sin(rad) * m
+  #   XY[dx, dy]
+  # end
+
+  ##
   # Vector's ending Point.
 
   def endpoint
-    position + dx_dy
+    self.position + dx_dy
   end
 
   ##
@@ -94,10 +106,10 @@ class Graphics::V
   end
 
   ##
-  # Return the distance to another vector (starting point), squared.
+  # Return the distance to another vector (starting point).
 
-  def distance_to_squared u
-    position.distance_to_squared u.position
+  def distance_to u
+    position.distance_to u.position
   end
 
   ##
@@ -128,4 +140,49 @@ class Graphics::V
   def turn dir
     self.a = (a + dir).degrees if dir
   end
+
+  ##
+  # Return a copy in opposite direction
+
+  def reverse
+    cp = self.dup
+    cp.turn 180
+    cp
+  end
+
+  ##
+  # Check collinearity
+
+  def collinear_with? u
+    x * u.y + y * u.x === 0
+  end
+
+
+  ##
+  # Vector product
+
+  def cross_prod u
+    dx, dy = self.dx_dy.to_a
+    ux, uy = u.dx_dy.to_a
+
+    dx * uy - dy * ux
+  end
+
+  ##
+  # Scalar product
+
+  def scalar_prod u
+    dx, dy = self.dx_dy.to_a
+    ux, uy = u.dx_dy.to_a
+
+    dx * ux + dy * uy
+  end
+
+  ##
+  # Return as a segment.
+
+  def to_seg
+    Segment.new self.position, self.endpoint
+  end
+
 end
