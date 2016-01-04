@@ -64,16 +64,6 @@ class Graphics::V
   end
 
   ##
-  # Vector's axial projection at angle.
-
-  # def proj alpha # :nodoc:
-  #   rad = alpha * D2R
-  #   dx = Math.cos(rad) * m
-  #   dy = Math.sin(rad) * m
-  #   XY[dx, dy]
-  # end
-
-  ##
   # Vector's ending Point.
 
   def endpoint
@@ -161,7 +151,7 @@ class Graphics::V
   ##
   # Vector product
 
-  def cross_prod u
+  def dot u
     dx, dy = self.dx_dy.to_a
     ux, uy = u.dx_dy.to_a
 

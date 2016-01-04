@@ -22,16 +22,16 @@ class Graphics::Body < Graphics::V
   WEST  = 180
 
   ##
-  # Body's environment.
+  # Simulation's model in which the Body exists.
 
-  attr_accessor :env
+  attr_accessor :mod
 
   ##
-  # Create a new body in windowing system +env+ with a new vector.
+  # Create a new body in windowing system +mod+ with a new vector.
 
-  def initialize env
-    self.env = env
-    super x:rand(env.w), y:rand(env.h)
+  def initialize mod
+    self.mod = mod
+    super x:rand(mod.w), y:rand(mod.h)
   end
 
   ##
@@ -51,7 +51,7 @@ class Graphics::Body < Graphics::V
   # Wrap the body if it hits an edge.
 
   def wrap
-    max_h, max_w = env.h, env.w
+    max_h, max_w = mod.h, mod.w
 
     self.x = max_w if x < 0
     self.y = max_h if y < 0

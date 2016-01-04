@@ -1,30 +1,32 @@
-require '/Users/fjs6/work/graphics_code/graphics/lib/graphics.rb'
-# require 'geometry'
+require '../lib/graphics.rb'
 
 class Ball < Graphics::Body
-
   RADIO = 4
-  GG = false
 
-  attr_accessor :c, :neg_gravity
+  attr_accessor :c, :gravity, :neg_gravity
 
-  def initialize sim_env
-    super
-    self.c = :white
+  def initialize sim_env, grav = false
+    super sim_env
+    if grav
+      self.gravity = mod.gravity
+      self.neg_gravity = gravity.reverse
+    end
   end
+
+  ##
+  # Aggregated vector of forces that affect the body
+  # from interacting with all walls
 
   def resultant
     h = {}
     seg1 = self.to_seg
-    i = env.lines.each do |l|
-      if i = seg1.intersection_point_with(l)
-        h[i] = l
-      end
+    i = mod.lines.each do |l|
+      h[i] = l if i = seg1.intersection_point_with(l)
     end
 
     unless h.empty?
       i = h.keys.min { |i| position.distance_to i }
-      self.env.z = i
+      self.mod.z = i
 
       return h[i].reaction_to(self)
     end
@@ -33,14 +35,12 @@ class Ball < Graphics::Body
   end
 
   def update
-    self.neg_gravity ||= env.gravity.reverse
-
     if r = resultant
       self.apply r
-      self.apply neg_gravity if GG
-      logg
+      self.apply neg_gravity if gravity
+      # logg
     else
-      self.apply env.gravity if GG
+      self.apply mod.gravity if gravity
       move
     end
   end
@@ -54,15 +54,7 @@ class Ball < Graphics::Body
 
   class View
     def self.draw w, o
-      w.line 0, 400, 400-RADIO, 400, :green
-      w.line 400+RADIO, 400, w.w, 400, :green
       w.circle o.x, o.y, RADIO, o.c, :fill
-      o.env.lines.each { |l| w.line *l.point1, *l.point2, :red }
-      if o.env.z
-        w.circle o.env.z.x, o.env.z.y, 10, :yellow
-        o.env.z = nil
-      end
-      w.fps o.env.n, o.env.start_time
     end
   end
 end
@@ -71,29 +63,69 @@ class Movie < Graphics::Simulation
   def initialize
     super 800, 800
 
-    env._bodies.flatten.each &:sync
-    self.env.gravity = Graphics::V.new a:-90, m: 0.3
+    self.mod.gravity = Graphics::V.new a: -90, m: 0.3
 
     add_walls
-    self.env.lines << Wall.new(XY[200, 500], XY[600, 500])
-    self.env.lines << Wall.new(XY[200, 500], XY[400, 700])
-    self.env.lines << Wall.new(XY[600, 500], XY[400, 700])
 
-    self.env.z = nil
+    self.mod.lines << Wall.new(XY[200, 500], XY[600, 500])
+    self.mod.lines << Wall.new(XY[200, 500], XY[400, 700])
+    self.mod.lines << Wall.new(XY[600, 500], XY[400, 700])
 
-    b1 = Ball.new(self.env)
+    self.mod.lines << Wall.new(XY[150, 700], XY[200, 700])
+    self.mod.lines << Wall.new(XY[200, 700], XY[200, 650])
+    self.mod.lines << Wall.new(XY[150, 600], XY[100, 600])
+    self.mod.lines << Wall.new(XY[100, 600], XY[100, 650])
+
+    self.mod.z = nil
+
+    b0 = Ball.new self.mod, true
+    b0.x, b0.y = 400, 400
+    b0.c = :red
+    b0.m = 0
+    b0.a = 0
+
+    b1 = Ball.new(self.mod)
     b1.x, b1.y = 100, 200
-    b1.c = :red
+    b1.c = :blue
     b1.m = 15
     b1.a = 40
-    b2 = Ball.new(self.env)
+
+    b2 = Ball.new(self.mod)
     b2.x, b2.y = 400, 600
     b2.c = :green
     b2.m = 5
     b2.a = 130
 
-    register_bodies [b1, b2]
-    # register_bodies [b1]
+    b3 = Ball.new(self.mod)
+    b3.x, b3.y = 100, 500
+    b3.c = :yellow
+    b3.m = 2
+    b3.a = 0
+
+    b4 = Ball.new(self.mod)
+    b4.x, b4.y = 150, 650
+    b4.c = :red
+    b4.m = 3
+    b4.a = 45
+
+    register_bodies [b0, b1, b2, b3, b4]
+  end
+
+  def draw n
+    clear
+
+    canvas.circle 400, 400, 8, :green
+    mod.lines.each { |l| canvas.line *l.point1, *l.point2, :red }
+    canvas.fps n, mod.start_time
+
+    if mod.z
+      canvas.circle mod.z.x, mod.z.y, 10, :yellow
+      mod.z = nil
+    end
+
+    self.mod._bodies.each do |ary|
+      draw_collection ary
+    end
   end
 end
 

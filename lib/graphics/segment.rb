@@ -5,7 +5,7 @@
 # require "graphics/xy"
 require_relative "./xy"
 
-class Segment < Struct.new(:point1, :point2)
+class Segment < Struct.new :point1, :point2
 
   def leftmost_endpoint
     ((point1.x <=> point2.x) == -1) ? point1 : point2
@@ -25,31 +25,32 @@ class Segment < Struct.new(:point1, :point2)
 
   def intersects_with?(other)
     Segment.have_intersecting_bounds?(self, other) &&
-      lies_on_line_intersecting?(other) &&
+      self.lies_on_line_intersecting?(other) &&
       other.lies_on_line_intersecting?(self)
   end
 
-  def intersection_point_with(segment)
-    # raise SegmentsDoNotIntersect unless intersects_with?(segment)
-    # raise SegmentsOverlap if overlaps?(segment)
-    return nil unless intersects_with?(segment)
+  def overlaps?(o)
+    # Segment.have_intersecting_bounds?(self, other) && # NOT CHECKING BEWARE
+    o1 = Segment.new self.point1, o.point1
+    o2 = Segment.new self.point1, o.point2
+    (dot_product(o1) === 0) && (dot_product(o2) === 0)
+  end
 
-    numerator = (segment.point1.y - point1.y) * (segment.point1.x - segment.point2.x) -
-      (segment.point1.y - segment.point2.y) * (segment.point1.x - point1.x);
-    denominator = (point2.y - point1.y) * (segment.point1.x - segment.point2.x) -
-      (segment.point1.y - segment.point2.y) * (point2.x - point1.x);
+  def intersection_point_with(o)
+    return nil unless intersects_with?(o)
+    return nil if overlaps?(o)
+
+    numerator = (o.point1.y - point1.y) * (o.point1.x - o.point2.x) -
+      (o.point1.y - o.point2.y) * (o.point1.x - point1.x);
+    denominator = (point2.y - point1.y) * (o.point1.x - o.point2.x) -
+      (o.point1.y - o.point2.y) * (point2.x - point1.x);
 
     t = numerator.to_f / denominator;
 
     x1 = point1.x + t * (point2.x - point1.x)
     y1 = point1.y + t * (point2.y - point1.y)
 
-    # Point.new(x, y)
     XY[x1, y1]
-  end
-
-  def to_vector
-    Graphics::V.new(x: point2.x - point1.x, y: point2.y - point1.y)
   end
 
   protected
@@ -70,22 +71,23 @@ class Segment < Struct.new(:point1, :point2)
     intersects_on_x_axis && intersects_on_y_axis
   end
 
-  def lies_on_line_intersecting?(segment)
-    vector_to_1st = Graphics::V.new
-    vector_to_1st.position = self.point1
-    vector_to_1st.endpoint = segment.point1
+  def lies_on_line_intersecting?(o)
+    o1 = Segment.new self.point1, o.point1
+    o2 = Segment.new self.point1, o.point2
 
-    vector_to_2nd = Graphics::V.new
-    vector_to_2nd.position = self.point1
-    vector_to_2nd.endpoint = segment.point2
+    # FIXME: '>=' and '<=' method of Fixnum and Float should be
+    # overriden too (take precision into account), there is a
+    # rare case, when this method is wrong due to precision
 
-    #FIXME: '>=' and '<=' method of Fixnum and Float should be overriden too (take precision into account)
-    # there is a rare case, when this method is wrong due to precision
+    dot_product(o1) * dot_product(o2) <= 0
+  end
 
-    my_vector = Graphics::V.new
-    my_vector.position = self.point1
-    my_vector.endpoint = self.point2
+  def dot_product o
+    dx = point2.x - point1.x
+    dy = point2.y - point1.y
+    odx = o.point2.x - o.point1.x
+    ody = o.point2.y - o.point1.y
 
-    my_vector.cross_prod(vector_to_1st) * my_vector.cross_prod(vector_to_2nd) <= 0
+    dx * ody - dy * odx
   end
 end
