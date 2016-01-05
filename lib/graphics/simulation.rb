@@ -2,7 +2,8 @@
 
 require "sdl/sdl"
 require "ostruct"
-require "graphics/canvas"
+# require "graphics/canvas"
+require_relative "./canvas"
 
 module SDL; end # :nodoc: -- stupid rdoc :(
 
@@ -27,7 +28,7 @@ class Graphics::AbstractSimulation
   #   - width and height of canvas
   #   - bodies updated/drawn in engine loop
   #   - any other info needed for updating the simulation
-  attr_accessor :env
+  attr_accessor :mod
 
   # Pause the simulation.
   attr_accessor :paused
@@ -58,7 +59,7 @@ class Graphics::AbstractSimulation
 
     self.canvas = Canvas.new w, h, bpp, name, self.class::SCREEN_FLAGS|full
 
-    self.env = OpenStruct.new :w => w, :h => h, :_bodies => []
+    self.mod = OpenStruct.new :w => w, :h => h, :_bodies => [], :lines => []
 
     self.paused = false
     self.iter_per_tick = 1
@@ -67,7 +68,7 @@ class Graphics::AbstractSimulation
     self.keydown_handler = {}
 
     def register_bodies ary
-      self.env._bodies << ary
+      self.mod._bodies << ary
       ary
     end
 
@@ -92,7 +93,7 @@ class Graphics::AbstractSimulation
 
   def populate klass, n = klass::COUNT
     n.times.map {
-      o = klass.new self.env
+      o = klass.new self.mod
       yield o if block_given?
       o
     }
@@ -151,7 +152,7 @@ class Graphics::AbstractSimulation
   # On each tick, call update, then draw the scene.
 
   def run
-    self.env.start_time = Time.now
+    self.mod.start_time = Time.now
     n = 0
     event = nil
 
@@ -184,7 +185,7 @@ class Graphics::AbstractSimulation
   def draw n
     clear
 
-    self.env._bodies.each do |ary|
+    self.mod._bodies.each do |ary|
       draw_collection ary
     end
   end
@@ -209,8 +210,8 @@ class Graphics::AbstractSimulation
   # extras at the end.
 
   def update n
-    self.env.n = n
-    self.env._bodies.each do |ary|
+    self.mod.n = n
+    self.mod._bodies.each do |ary|
       ary.each(&:update)
     end
   end
@@ -219,7 +220,17 @@ class Graphics::AbstractSimulation
   # Clear the whole screen
 
   def clear c = :black
-    canvas.fast_rect 0, 0, env.w, env.h, c
+    canvas.fast_rect 0, 0, mod.w, mod.h, c
+  end
+
+  ##
+  # Add walls to simulation environment
+
+  def add_walls
+    self.mod.lines << Wall.new(XY[0.0, 0.0],   XY[mod.w, 0.0])       \
+                   << Wall.new(XY[0.0, mod.h], XY[mod.w, mod.h]) \
+                   << Wall.new(XY[0.0, 0.0],   XY[0.0, mod.h])       \
+                   << Wall.new(XY[mod.w, 0.0], XY[mod.w, mod.h])
   end
 
   ### Blitting Methods:
