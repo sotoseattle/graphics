@@ -1,6 +1,9 @@
-require '../lib/graphics.rb'
+require './lib/graphics.rb'
+require './lib/graphics/linear_motion.rb'
 
 class Ball < Graphics::Body
+  include LinearMotion
+
   RADIO = 4
 
   attr_accessor :c, :gravity, :neg_gravity
@@ -13,43 +16,36 @@ class Ball < Graphics::Body
     end
   end
 
-  ##
-  # Aggregated vector of forces that affect the body
-  # from interacting with all walls
-
-  def resultant
+  def resultant_over pepe
     h = {}
-    seg1 = self.to_seg
     i = mod.lines.each do |l|
-      h[i] = l if i = seg1.intersection_point_with(l)
+      h[i] = l if i = pepe.intersection_point_with(l)
     end
 
     unless h.empty?
-      i = h.keys.min { |i| position.distance_to i }
-      self.mod.z = i
-
-      return h[i].reaction_to(self)
+      i = h.keys.min { |i| pepe.position.distance_to i }
+      return h[i].reaction_to(pepe)
     end
 
     nil
   end
 
-  def update
-    if r = resultant
-      self.apply r
-      self.apply neg_gravity if gravity
-      # logg
+  def tick
+    if self.gravity
+      r = mod.gravity
+      self.apply(r)
     else
-      self.apply mod.gravity if gravity
-      move
+      r = true
+    end
+
+    while r
+      r = resultant_over(self)
+      self.apply(r) if r
     end
   end
 
-  def logg
-    p m
-    p a
-    p position
-    puts "-"*20
+  def tock
+    move
   end
 
   class View

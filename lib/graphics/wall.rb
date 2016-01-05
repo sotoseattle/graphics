@@ -1,17 +1,20 @@
 # require "graphics/v"
 # require "graphics/segment"
 require_relative "./v"
-require_relative "./segment"
+# require_relative "./segment"
+require_relative "./geometria"
 
-class Wall < Segment
-  attr_accessor :f
+class Wall #< Segment
+  include Geometria
+  attr_accessor :f, :point1, :point2
 
   ##
   # A Wall, a segment defined by two endpoints, and
   # a vector perpendicular to it.
 
   def initialize xy1, xy2
-    super xy1, xy2
+    # super xy1, xy2
+    self.point1, self.point2 = xy1, xy2
 
     self.f = Graphics::V.new
     self.f.position = point1

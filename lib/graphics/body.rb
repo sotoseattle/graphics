@@ -37,7 +37,13 @@ class Graphics::Body < Graphics::V
   ##
   # Update the body's state (usually its vector). To be overriden.
 
-  def update
+  # def update
+  # end
+
+  def tick
+  end
+
+  def tock
   end
 
   ##
