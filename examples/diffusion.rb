@@ -4,26 +4,23 @@ require './lib/graphics/linear_motion.rb'
 class Ball < Graphics::Body
   include LinearMotion
 
-  attr_accessor :c, :r, :f
+  attr_accessor :c, :r, :store
 
-  RADIO = 5
-
-  def initialize sim_env, grav = false
+  def initialize sim_env
     super sim_env
-    self.f = false
-    self.r = RADIO
+    self.r = 2
   end
 
   def tick
-    return if m == 0
+    return if calcified?
     super
   end
 
   def tock
-    return if m == 0
+    return if calcified?
 
-    if mod.polyp.touching? self
-      mod.polyp.grow self
+    if self.store = mod.polyp.touching(self)
+      mod.polyp.attach self
     else
       move
     end
@@ -31,13 +28,25 @@ class Ball < Graphics::Body
 
   def calcify
     self.m = 0
-    self.c = :green
-    self.f = true
+  end
+
+  def calcified?
+    m == 0
+  end
+
+  def touches other
+    position.distance_to(other) <= r + other.r
   end
 
   class View
     def self.draw w, o
-      w.circle o.x, o.y, o.r, o.c, o.f
+      if o.store
+        w.line o.x, o.y, o.store.x, o.store.y, :green
+      end
+
+      unless o.calcified?
+        w.circle o.x, o.y, o.r, o.c
+      end
     end
   end
 end
@@ -49,12 +58,11 @@ class Polyp
 
   def initialize cell
     self.cells = {}
-    grow cell
+    attach cell
   end
 
-  def grow cell
-    new_key = cells.size + 1
-    self.cells[new_key] = cell
+  def attach cell
+    cells[cells.size] = cell
     self.kd = Kdtree.new cell_data
     cell.calcify
   end
@@ -63,9 +71,10 @@ class Polyp
     cells.map { |k, v| [v.x, v.y, k] }
   end
 
-  def touching? cell
-    b = cells[kd.nearest cell.x, cell.y]
-    cell.position.distance_to(b) < cell.r + b.r
+  def touching cell
+    nearest = cells[kd.nearest cell.x, cell.y]
+    return nearest if cell.touches nearest
+    nil
   end
 end
 
@@ -77,17 +86,19 @@ class Difuso < Graphics::Simulation
 
     add_walls
 
-    b = Ball.new self.mod
-    b.x, b.y = ANCHO/2, ALTO/2
+    seed = Ball.new self.mod
+    seed.x, seed.y = ANCHO/2, ALTO/2
 
-    balls = [b]
-    self.mod.polyp = Polyp.new b
+    balls = [seed]
+
+    self.mod.polyp = Polyp.new seed
 
     500.times do
       b = Ball.new self.mod
-      b.x, b.y = 1 + rand(ANCHO - 2), 1 + rand(ALTO - 2)
+      b.x, b.y = rand(1..ANCHO - 1), rand(1..ALTO - 1)
       b.c = :red
-      b.m = 1 + rand(4)
+      b.m = 1 + rand(9)
+      b.r = 2 + rand(7)
       b.a = rand 360
       balls << b
     end
