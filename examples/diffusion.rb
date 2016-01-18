@@ -1,8 +1,11 @@
 require './lib/graphics.rb'
 require './lib/graphics/linear_motion.rb'
+require './lib/graphics/rainbows'
 
 class Ball < Graphics::Body
   include LinearMotion
+
+  COUNT = 1_000
 
   attr_accessor :c, :r, :store
 
@@ -27,6 +30,7 @@ class Ball < Graphics::Body
   end
 
   def calcify
+    self.c = time_sensitive_coloring
     self.m = 0
   end
 
@@ -38,10 +42,17 @@ class Ball < Graphics::Body
     position.distance_to(other) <= r + other.r
   end
 
+  def time_sensitive_coloring
+    n = ((mod.n || 0) * Graphics::Simulation::R2D) % 360
+    color = mod.spectrum.clamp(n, 250, 360).to_i
+    "cubehelix_#{color}".to_sym
+  end
+
   class View
     def self.draw w, o
       if o.store
-        w.line o.x, o.y, o.store.x, o.store.y, :green
+        w.line o.x, o.y, o.store.x, o.store.y, o.c
+        w.circle o.x, o.y, o.r/3, :gray
       end
 
       unless o.calcified?
@@ -57,18 +68,18 @@ class Polyp
   attr_accessor :kd, :cells
 
   def initialize cell
-    self.cells = {}
+    self.cells = []
     attach cell
   end
 
   def attach cell
-    cells[cells.size] = cell
+    cells << cell
     self.kd = Kdtree.new cell_data
     cell.calcify
   end
 
   def cell_data
-    cells.map { |k, v| [v.x, v.y, k] }
+    cells.map.with_index { |c, i| [c.x, c.y, i] }
   end
 
   def touching cell
@@ -81,26 +92,29 @@ end
 class Difuso < Graphics::Simulation
   ANCHO, ALTO = 800, 800
 
+  attr_reader :spectrum
+
   def initialize
     super ANCHO, ALTO
 
+    @spectrum = Graphics::Cubehelix.new
+    self.initialize_rainbow spectrum, "cubehelix"
+    mod.spectrum = @spectrum
+
     add_walls
 
-    seed = Ball.new self.mod
+    seed = Ball.new mod
     seed.x, seed.y = ANCHO/2, ALTO/2
-
-    balls = [seed]
 
     self.mod.polyp = Polyp.new seed
 
-    500.times do
-      b = Ball.new self.mod
+    balls = [seed]
+    balls += populate Ball do |b|
       b.x, b.y = rand(1..ANCHO - 1), rand(1..ALTO - 1)
       b.c = :red
       b.m = 1 + rand(9)
       b.r = 2 + rand(7)
       b.a = rand 360
-      balls << b
     end
 
     register_bodies balls
