@@ -177,18 +177,18 @@ class Graphics::Body
     max_h, max_w = w.h, w.w
 
     if x < 0 then
-      self.x = 0
+      self.x = x.abs
       return :west
     elsif x > max_w then
-      self.x = max_w
+      self.x = 2 * max_w - x
       return :east
     end
 
     if y < 0 then
-      self.y = 0
+      self.y = y.abs
       return :south
     elsif y > max_h then
-      self.y = max_h
+      self.y = 2 * max_h - y
       return :north
     end
 
@@ -229,6 +229,7 @@ class Graphics::Body
     if wall = clip then
       self.a = (2 * NORMAL[wall] - 180 - a).degrees
       self.m *= (1.0 - friction)
+      true
     end
   end
 
