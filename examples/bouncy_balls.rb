@@ -30,16 +30,16 @@ class Movie < Graphics::Simulation
 
     add_walls
 
-    self.model.lines << Wall.new(V[200, 500], V[600, 500])
-    self.model.lines << Wall.new(V[200, 500], V[400, 700])
-    self.model.lines << Wall.new(V[600, 500], V[400, 700])
+    triangle = [Wall.new(V[200, 500], V[600, 500]),
+                Wall.new(V[200, 500], V[400, 700]),
+                Wall.new(V[600, 500], V[400, 700])]
+    corners  = [Wall.new(V[150, 700], V[200, 700]),
+                Wall.new(V[200, 700], V[200, 650]),
+                Wall.new(V[150, 600], V[100, 600]),
+                Wall.new(V[100, 600], V[100, 650])]
 
-    self.model.lines << Wall.new(V[150, 700], V[200, 700])
-    self.model.lines << Wall.new(V[200, 700], V[200, 650])
-    self.model.lines << Wall.new(V[150, 600], V[100, 600])
-    self.model.lines << Wall.new(V[100, 600], V[100, 650])
-
-    self.model.z = nil
+    register_bodies triangle
+    register_bodies corners
 
     b0 = Ball.new self.model, true
     b0.x, b0.y = 400, 400

@@ -226,10 +226,11 @@ class Graphics::AbstractSimulation
   # Add walls to simulation environment
 
   def add_walls
-    self.model.lines << Wall.new(V.new(0.0, 0.0),   V.new(model.w, 0.0))       \
-                     << Wall.new(V.new(0.0, model.h), V.new(model.w, model.h)) \
-                     << Wall.new(V.new(0.0, 0.0),   V.new(0.0, model.h))       \
-                     << Wall.new(V.new(model.w, 0.0), V.new(model.w, model.h))
+    frame = [Wall.new(V.new(0.0, 0.0),   V.new(model.w, 0.0)),
+             Wall.new(V.new(0.0, model.h), V.new(model.w, model.h)),
+             Wall.new(V.new(0.0, 0.0),   V.new(0.0, model.h)),
+             Wall.new(V.new(model.w, 0.0), V.new(model.w, model.h))]
+    register_bodies frame
   end
 
   ### Blitting Methods:

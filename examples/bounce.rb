@@ -29,9 +29,10 @@ class BounceSimulation < Graphics::Simulation
   def initialize
     super 640, 640, 16, "Bounce"
 
+    self.model.gravity = V[0, -0.3]
+
     add_walls
 
-    self.model.gravity = V[0, -0.3]
     register_bodies populate Ball
   end
 
@@ -52,7 +53,7 @@ class BounceSimulation < Graphics::Simulation
   LOG_INTERVAL = 120
 
   def log
-    puts self.model._bodies.flatten.map(&:velocity).inject(&:+).magnitude
+    # puts self.model._bodies.flatten.map(&:velocity).inject(&:+).magnitude
   end
 
 end

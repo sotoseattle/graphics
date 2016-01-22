@@ -39,7 +39,7 @@ class Ball < Graphics::Body
   end
 
   def calcified?
-    self.velocity.magnitude == 0.0
+    self.velocity == V[0, 0]
   end
 
   def touches other

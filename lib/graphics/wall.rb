@@ -40,4 +40,21 @@ class Wall < Segment
     uni.perp_projection(b.velocity).reverse
   end
 
+  ##
+  # Update the state in two stages. Override.
+
+  def interact
+  end
+
+  def update
+  end
+
+  ##
+  # Draw.
+
+  class View
+    def self.draw w, o
+      w.line o.point1.x, o.point1.y, o.point2.x, o.point2.y, :red
+    end
+  end
 end
