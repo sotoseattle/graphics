@@ -1,44 +1,50 @@
-require_relative './geometria'
+# require 'grpahics/segment'
+require_relative './segment'
+
+# TODO: THIS IS A MESS. BEWARE!!
 
 module LinearMotion
-  include Geometria
-
-  # attr_accessor :r
 
   def point1
     position
   end
 
   def point2
-    endpoint  # TODO: way too much computation: bag it!
+    endpoint
   end
 
+  ##
+  # Estimated linear trajectory.
+
+  def trajectory
+    Segment.new point1, point2
+  end
 
   # Intersection of vector and segment.
 
   def intersection_point_with o
     if  o.is_a?(Graphics::Body) && self.dot_product(o) == 0
-      s = self.to_seg
-      if Geometria.have_intersecting_bounds?(s, o) && s.overlaps?(o)
+      s = self.trajectory
+      if Segment.have_intersecting_bounds?(s, o) && s.overlaps?(o)
         return position
       end
     end
 
-    self.to_seg.intersection_point_with(o)
+    self.trajectory.intersection_point_with(o)
   end
 
-  def reaction_to o
-    d = o.dup
-    d.a += 180
-    self + d
-  end
+  # def reaction_to o
+  #   d = o.dup
+  #   d.a += 180
+  #   self + d
+  # end
 
   ##
   # Aggregated vector of all interactions that affect the body.
 
   def resultant
     h = {}
-    i = mod.lines.each do |l|
+    i = model.lines.each do |l|
       h[i] = l if i = intersection_point_with(l)
     end
 
@@ -48,28 +54,6 @@ module LinearMotion
     end
 
     nil
-  end
-
-  ##
-  # Take into consideration all possible interactions. Override to extend.
-
-  def tick
-    res = true
-    while res
-      res = resultant
-      self.apply(res) if res
-    end
-     # self.r = resultant if m
-  end
-
-  def tock
-    move
-    # if r
-    #   self.apply(r)
-    # else
-    #   move
-    #   self.r = nil
-    # end
   end
 
 end

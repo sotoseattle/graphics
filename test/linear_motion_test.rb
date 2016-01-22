@@ -21,7 +21,7 @@ class TestWalls < Minitest::Test
   def setup
     self.w = Graphics::Simulation.new(100, 100)
     self.w.add_walls
-    self.b = Graphics::Body.new w.mod
+    self.b = Graphics::Body.new w.model
     self.b.extend LinearMotion
 
     b.x = 50
@@ -84,8 +84,8 @@ class TestObstacles < Minitest::Test
 
   def setup
     self.w = Graphics::Simulation.new(100, 100)
-    self.w.mod.lines << Wall.new(XY[50, 0], XY[100, 100])
-    self.b = Graphics::Body.new w.mod
+    self.w.model.lines << Wall.new(V[50, 0], V[100, 100])
+    self.b = Graphics::Body.new w.model
     self.b.extend LinearMotion
   end
 
@@ -116,7 +116,7 @@ class TestObstacles < Minitest::Test
   end
 
   def test_no_bounce_edgewise
-    self.w.mod.lines << Wall.new(XY[0, 50], XY[10, 50])
+    self.w.model.lines << Wall.new(V[0, 50], V[10, 50])
 
     b.x = 15
     b.y = 50
@@ -137,19 +137,19 @@ class TestGravField < Minitest::Test
 
   def setup
     self.w = Graphics::Simulation.new(100, 100)
-    self.w.mod.lines << Wall.new(XY[0, 0], XY[100, 0])
-    self.b = Graphics::Body.new w.mod
+    self.w.model.lines << Wall.new(V[0, 0], V[100, 0])
+    self.b = Graphics::Body.new w.model
     self.b.extend LinearMotion
 
-    self.w.mod.pos_gravity = Graphics::V.new a: -90, m: 0.3
-    self.w.mod.neg_gravity = Graphics::V.new a: +90, m: 0.3
+    self.w.model.pos_gravity = Graphics::V.new a: -90, m: 0.3
+    self.w.model.neg_gravity = Graphics::V.new a: +90, m: 0.3
 
     self.b.define_singleton_method(:tock) do
       if r
         self.apply r
-        self.apply mod.neg_gravity
+        self.apply model.neg_gravity
       else
-        self.apply mod.pos_gravity
+        self.apply model.pos_gravity
         move
       end
       self.r = nil

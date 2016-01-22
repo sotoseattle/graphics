@@ -9,41 +9,56 @@ require "minitest/focus"
 require_relative "../lib/graphics"
 
 class TestBody < Minitest::Test
-  attr_accessor :w, :b
-
-  def assert_body x, y, m, a
-    assert_in_delta x,  b.x,  0.001, "x"
-    assert_in_delta y,  b.y,  0.001, "y"
-    assert_in_delta a,  b.a,  0.001, "a"
-    assert_in_delta m,  b.m,  0.001, "m"
-  end
+  attr_accessor :b
 
   def setup
-    self.w = Graphics::Simulation.new(100, 100)
-    self.b = Graphics::Body.new w.mod
-
-    b.x = 50
-    b.y = 50
-    b.m = 10
-    b.a = 0
+    w = Graphics::Simulation.new(100, 100)
+    self.b = Graphics::Body.new w.model
+    b.position = V.new(50, 50)
+    b.velocity = V[10, 0]
   end
 
-  def test_movement
-    assert_body  50, 50, 10, 0
+  def test_vectors
+    assert_in_delta 50, b.x
+    assert_in_delta 50, b.y
+    assert_equal 10, b.velocity.magnitude
+    assert_equal 0, b.velocity.angle
+  end
 
-    b.move
-    assert_body  60, 50, 10, 0
+  def test_push_to_the_right
+    assert_equal V[50, 50], b.position
+    assert_equal V[60, 50], b.endpoint
+  end
+
+  def test_push_up
+    b.velocity = V[0, 10]
+    assert_equal V[50, 50], b.position
+    assert_equal V[50, 60], b.endpoint
+  end
+
+  def test_push_to_the_left
+    b.velocity = V[-10, 0]
+    assert_equal V[50, 50], b.position
+    assert_equal V[40, 50], b.endpoint
+  end
+
+  def test_push_down
+    b.velocity = V[0, -10]
+    assert_equal V[50, 50], b.position
+    assert_equal V[50, 40], b.endpoint
   end
 
   def test_wrapping
     b.x = 99
 
-    assert_body  99, 50, 10, 0
+    assert_in_delta 99, b.x
+    assert_in_delta 50, b.y
 
     b.move
     b.wrap
 
-    assert_body   0, 50, 10, 0
+    assert_in_delta  0, b.x
+    assert_in_delta 50, b.y
   end
 
 end
