@@ -25,7 +25,7 @@ class Graphics::Body
 
   def initialize model
     self.model = model
-    self.position = V.new rand(model.w), rand(model.h)
+    self.position = V.new rand(1..model.w-1), rand(1..model.h-1)
     self.velocity = V.new 0.0, 0.0
     self.acceleration = V.new 0.0, 0.0
   end
@@ -35,9 +35,15 @@ class Graphics::Body
 
   def tick
     self.velocity += self.acceleration
+
+    while r = resultant
+      r += model.gravity if model.gravity
+      self.velocity += r
+    end
   end
 
   def tock
+    move
   end
 
   ##

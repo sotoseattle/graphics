@@ -49,7 +49,7 @@ module LinearMotion
     end
 
     unless h.empty?
-      i = h.keys.min { |i| position.distance_to i }
+      i = h.keys.min { |j| position.distance_to j }
       return h[i].reaction_to(self)
     end
 

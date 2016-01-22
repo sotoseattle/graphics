@@ -30,19 +30,6 @@ class Ball < Graphics::Body
     nil
   end
 
-  def tick
-    super
-
-    while r = resultant
-      r += model.gravity
-      self.velocity += r
-    end
-  end
-
-  def tock
-    move
-  end
-
   class View
     def self.draw w, o
       w.circle o.x, o.y, RADIO, o.c, :fill
@@ -76,7 +63,7 @@ class Movie < Graphics::Simulation
     b1 = Ball.new self.model
     b1.x, b1.y = 100, 200
     b1.c = :blue
-    b1.velocity = V.new_polar a = 40, m = 15
+    b1.velocity = V.new_polar a = 40, m = 10
 
     b2 = Ball.new self.model
     b2.x, b2.y = 400, 600

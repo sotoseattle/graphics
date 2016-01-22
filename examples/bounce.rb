@@ -1,25 +1,23 @@
 #!/usr/local/bin/ruby -w
 
-require "graphics"
+# require "graphics"
+require_relative "../lib/graphics"
+require './lib/graphics/linear_motion.rb'
 
 class Ball < Graphics::Body
+  include LinearMotion
+
   COUNT = 50
 
-  def initialize env
+  def initialize model
     super
-
-    self.a = random_angle / 2
-    self.m = rand 25
-  end
-
-  def update
-    apply env.gravity
-    move(&:bounce)
+    self.velocity = V[rand(9), 8-rand(9)]
+    self.acceleration = model.gravity
   end
 
   class View
     def self.draw w, o
-      w.angle o.x, o.y, o.a, 10+3*o.m, :red
+      w.angle o.x, o.y, o.velocity.angle, 10+3*o.velocity.magnitude, :red
       w.circle o.x, o.y, 5, :white, :filled
     end
   end
@@ -27,12 +25,13 @@ class Ball < Graphics::Body
 end
 
 class BounceSimulation < Graphics::Simulation
-  attr_accessor :gravity
 
   def initialize
     super 640, 640, 16, "Bounce"
 
-    self.env.gravity = Graphics::V.new a:-90, m:(3 / 10.0)
+    add_walls
+
+    self.model.gravity = V[0, -0.3]
     register_bodies populate Ball
   end
 
@@ -43,21 +42,19 @@ class BounceSimulation < Graphics::Simulation
   end
 
   def randomize
-    self.env._bodies.each do |b|
-      b.m = rand(25)
-      b.a = b.random_angle / 2
-    end
+    self.model._bodies.each { |b| b.velocity = V[9 - rand(9), rand(9)] }
   end
 
   def reverse
-    self.env.gravity.turn 180
+    self.model.gravity.turn 180
   end
 
   LOG_INTERVAL = 120
 
   def log
-    puts self.env._bodies.flatten.map(&:m).inject(&:+)
+    puts self.model._bodies.flatten.map(&:velocity).inject(&:+).magnitude
   end
+
 end
 
 BounceSimulation.new.run
