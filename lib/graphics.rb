@@ -11,4 +11,3 @@ end
 require_relative "./graphics/simulation"
 require_relative "./graphics/body"
 require_relative "./graphics/wall"
-# require_relative "./graphics/linear_motion"

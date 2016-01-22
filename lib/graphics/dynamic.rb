@@ -1,43 +1,28 @@
 # require 'grpahics/segment'
 require_relative './segment'
 
-# TODO: THIS IS A MESS. BEWARE!!
+module Dynamic
+  attr_accessor :velocity, :acceleration
 
-module LinearMotion
-
-  def point1
-    position
-  end
-
-  def point2
-    endpoint
+  def initialize mod
+    super mod
+    self.velocity = V[0.0, 0.0]
+    self.acceleration = V[0.0, 0.0]
   end
 
   ##
   # Estimated linear trajectory.
 
   def trajectory
-    Segment.new point1, point2
+    Segment.new position, endpoint
   end
 
+  ##
   # Intersection of vector and segment.
 
   def intersection_point_with o
-    if  o.is_a?(Graphics::Body) && self.dot_product(o) == 0
-      s = self.trajectory
-      if Segment.have_intersecting_bounds?(s, o) && s.overlaps?(o)
-        return position
-      end
-    end
-
-    self.trajectory.intersection_point_with(o)
+    self.trajectory.intersection_point_with(o.trajectory)
   end
-
-  # def reaction_to o
-  #   d = o.dup
-  #   d.a += 180
-  #   self + d
-  # end
 
   ##
   # Aggregated vector of all interactions that affect the body.
@@ -54,6 +39,22 @@ module LinearMotion
     end
 
     nil
+  end
+
+  ##
+  # Update the body's state (usually its vector) in two stages. Override.
+
+  def interact
+    self.velocity += self.acceleration
+
+    while r = resultant
+      r += model.gravity if model.gravity
+      self.velocity += r
+    end
+  end
+
+  def update
+    move
   end
 
 end

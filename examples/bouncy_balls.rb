@@ -1,9 +1,9 @@
 require './lib/graphics.rb'
 require './lib/graphics/segment.rb'
-require './lib/graphics/linear_motion.rb'
+require './lib/graphics/dynamic.rb'
 
 class Ball < Graphics::Body
-  include LinearMotion
+  include Dynamic
 
   RADIO = 4
 
@@ -13,21 +13,6 @@ class Ball < Graphics::Body
     super sim_env
 
     self.acceleration = model.gravity if grav
-  end
-
-  def resultant
-    h = {}
-    i = model.lines.each do |l|
-      h[i] = l if i = intersection_point_with(l)
-    end
-
-    unless h.empty?
-      i = h.keys.min { |i| position.distance_to i }
-      self.model.z = i
-      return h[i].reaction_to(self)
-    end
-
-    nil
   end
 
   class View

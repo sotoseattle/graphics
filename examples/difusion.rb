@@ -1,10 +1,10 @@
 # require 'graphics.rb'
 require_relative '../lib/graphics.rb'
 require_relative '../lib/graphics/rainbows'
-require './lib/graphics/linear_motion.rb'
+require './lib/graphics/dynamic.rb'
 
 class Ball < Graphics::Body
-  include LinearMotion
+  include Dynamic
 
   attr_accessor :c, :r, :store
 
@@ -21,7 +21,7 @@ class Ball < Graphics::Body
     self.store = self
   end
 
-  def tick
+  def interact
     return if calcified?
     super
 
@@ -30,7 +30,7 @@ class Ball < Graphics::Body
     end
   end
 
-  def tock
+  def update
     move
   end
 

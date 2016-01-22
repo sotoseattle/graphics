@@ -9,14 +9,11 @@ require_relative "./segment"
 
 ##
 # A body in the simulation.
-#
-# A body is a fat vector (position, direction and magnitude), that knows
-# its daddy (the simulation where it exists) plus some hot moves.
 
 class Graphics::Body
   extend Forwardable
 
-  attr_accessor :model, :position, :velocity, :acceleration
+  attr_accessor :model, :position
 
   def_delegators :position, :x, :x=, :y, :y=
 
@@ -26,24 +23,18 @@ class Graphics::Body
   def initialize model
     self.model = model
     self.position = V.new rand(1..model.w-1), rand(1..model.h-1)
-    self.velocity = V.new 0.0, 0.0
-    self.acceleration = V.new 0.0, 0.0
   end
 
   ##
-  # Update the body's state (usually its vector) in two stages. Override.
+  # Update (1st step) by computing interactions. Override.
 
-  def tick
-    self.velocity += self.acceleration
-
-    while r = resultant
-      r += model.gravity if model.gravity
-      self.velocity += r
-    end
+  def interact
   end
 
-  def tock
-    move
+  ##
+  # Update (2nd step) the body's state. Override.
+
+  def update
   end
 
   ##

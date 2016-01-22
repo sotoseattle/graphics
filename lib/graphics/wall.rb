@@ -13,6 +13,10 @@ class Wall < Segment
     self.uni = (point2 - point1).unit
   end
 
+  def trajectory
+    self
+  end
+
   ##
   # Override to alter behavior.
 

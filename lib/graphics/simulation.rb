@@ -210,15 +210,9 @@ class Graphics::AbstractSimulation
   # extras at the end.
 
   def update n
-    # self.model.n = n
-    # self.model._bodies.each do |ary|
-    #   ary.each(&:update)
-    # end
     self.model.n = n
-    # compute all...
-    self.model._bodies.each { |ary| ary.each(&:tick) }
-    # ...now move
-    self.model._bodies.each { |ary| ary.each(&:tock) }
+    self.model._bodies.each { |ary| ary.each(&:interact) }
+    self.model._bodies.each { |ary| ary.each(&:update) }
   end
 
   ##

@@ -2,10 +2,10 @@
 
 # require "graphics"
 require_relative "../lib/graphics"
-require './lib/graphics/linear_motion.rb'
+require './lib/graphics/dynamic.rb'
 
 class Ball < Graphics::Body
-  include LinearMotion
+  include Dynamic
 
   COUNT = 50
 

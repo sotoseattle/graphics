@@ -7,13 +7,15 @@ require "minitest/focus"
 
 # require "graphics"
 require_relative "../lib/graphics"
+require_relative "../lib/graphics/dynamic"
 
-class TestBody < Minitest::Test
+class TestBodyDynamic < Minitest::Test
   attr_accessor :b
 
   def setup
     w = Graphics::Simulation.new(100, 100)
     self.b = Graphics::Body.new w.model
+    b.extend Dynamic
     b.position = V.new(50, 50)
     b.velocity = V[10, 0]
   end
