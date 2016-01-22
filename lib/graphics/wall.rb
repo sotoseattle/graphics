@@ -1,62 +1,60 @@
 # require "graphics/v"
-# require "graphics/segment"
 require_relative "./v"
 require_relative "./segment"
 
 class Wall < Segment
-  attr_accessor :f
+  attr_accessor :uni, :point1, :point2
 
   ##
-  # A Wall, a segment defined by two endpoints, and
-  # a vector perpendicular to it.
+  # A Wall, a segment where each point is defined by vectors.
 
-  def initialize xy1, xy2
-    super xy1, xy2
+  def initialize v1, v2
+    self.point1, self.point2 = v1, v2
+    self.uni = (point2 - point1).unit
+  end
 
-    self.f = Graphics::V.new
-    self.f.position = point1
-    self.f.endpoint = point2
-    self.f.m = 0
+  def trajectory
+    self
   end
 
   ##
-  # Perpendicular reaction vector. Override to alter behavior.
+  # Override to alter behavior.
 
   def reaction_to b
-    n = self.f.dup
-    n.m = b.m
-
-    # angle of normal vector depending on where the ball comes from.
-    prod = b.dot n
-    orientation = prod > 0 ? 90 : -90
-    n.a += orientation
-
-    # magnitude of reaction vector.
-    n.m = bounce b, n
-
-    n
+    bounce b
   end
 
   ##
-  # Collinear projection of vector over another.
+  # Bounce by reversing the perpend force.
 
-  def projection v, u
-    v.scalar_prod(u) / v.m
+  def bounce b
+    n = uni.perp_projection b.velocity
+    n *= 2
+    n.reverse
   end
 
   ##
-  # Perpendicular projection of vector over another.
+  # Clip by annuling the perpendicular force.
 
-  def bounce body, barrier
-    proj_m = projection body, barrier
-    proj_m.abs - proj_m
+  def clip b
+    uni.perp_projection(b.velocity).reverse
   end
 
   ##
-  # Perpendicular partial projection to neutralize movement over that axis.
+  # Update the state in two stages. Override.
 
-  def clip body, barrier
-    projection(body, barrier).abs
+  def interact
   end
 
+  def update
+  end
+
+  ##
+  # Draw.
+
+  class View
+    def self.draw w, o
+      w.line o.point1.x, o.point1.y, o.point2.x, o.point2.y, :red
+    end
+  end
 end

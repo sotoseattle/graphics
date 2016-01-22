@@ -3,40 +3,46 @@
 
 srand 42
 
-require "graphics"
+# require "graphics"
+require_relative "../lib/graphics"
+require './lib/graphics/dynamic.rb'
+require 'set'
 
 ##
 # Virtual Ants -- inspired by a model in NetLogo.
 
 class Vant < Graphics::Body
-  COUNT = 100
+  include Dynamic
+
+  COUNT = 1000
   M = 1
 
-  attr_accessor :white, :black, :red, :s
+  attr_accessor :red
 
-  def initialize w
+  def initialize model
     super
-    self.s = w.screen
-    self.a = random_angle
-    self.m = M
 
-    self.white = w.color[:white]
-    self.black = w.color[:black]
+    self.velocity = V.new_polar(rand(360.0), M)
+    model.screen << [x, y]
   end
 
-  def forward
+  def interact
     move
-    mutate
   end
 
-  def mutate
-    if s[x, y] == white then
-      s[x, y] = black
-      turn 270
+  def update
+    if model.screen.include? [x, y]
+      model.screen.delete [x, y]
+       turn 270
     else
-      s[x, y] = white
+      model.screen << [x, y]
       turn 90
     end
+  end
+
+  def turn beta
+    alpha = velocity.cart_to_polar[:a]
+    self.velocity = V.polar_to_cart (alpha +  beta).degrees, M
   end
 end
 
@@ -46,24 +52,17 @@ class Vants < Graphics::Simulation
   def initialize
     super 850, 850, 16, self.class.name
 
-    # cheat and reopen screen w/o double buffering
-    self.screen = SDL::Screen.open 850, 850, 16, SDL::HWSURFACE
-    clear :white
+    self.model.screen = Set.new
 
-    self.vs = populate Vant
-  end
-
-  def update n
-    vs.each(&:forward)
-  end
-
-  def draw_and_flip n
-    self.draw n
-    # no flip
+    register_bodies populate Vant
   end
 
   def draw n
-    screen.update 0, 0, 0, 0
+    clear :white
+
+    model.screen.each do |x, y|
+      canvas.point x, y, :black
+    end
   end
 end
 

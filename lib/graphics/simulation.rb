@@ -28,7 +28,7 @@ class Graphics::AbstractSimulation
   #   - width and height of canvas
   #   - bodies updated/drawn in engine loop
   #   - any other info needed for updating the simulation
-  attr_accessor :mod
+  attr_accessor :model
 
   # Pause the simulation.
   attr_accessor :paused
@@ -59,7 +59,7 @@ class Graphics::AbstractSimulation
 
     self.canvas = Canvas.new w, h, bpp, name, self.class::SCREEN_FLAGS|full
 
-    self.mod = OpenStruct.new :w => w, :h => h, :_bodies => [], :lines => []
+    self.model = OpenStruct.new :w => w, :h => h, :_bodies => [], :lines => []
 
     self.paused = false
     self.iter_per_tick = 1
@@ -68,7 +68,7 @@ class Graphics::AbstractSimulation
     self.keydown_handler = {}
 
     def register_bodies ary
-      self.mod._bodies << ary
+      self.model._bodies << ary
       ary
     end
 
@@ -93,7 +93,7 @@ class Graphics::AbstractSimulation
 
   def populate klass, n = klass::COUNT
     n.times.map {
-      o = klass.new self.mod
+      o = klass.new self.model
       yield o if block_given?
       o
     }
@@ -152,7 +152,7 @@ class Graphics::AbstractSimulation
   # On each tick, call update, then draw the scene.
 
   def run
-    self.mod.start_time = Time.now
+    self.model.start_time = Time.now
     n = 0
     event = nil
 
@@ -185,7 +185,7 @@ class Graphics::AbstractSimulation
   def draw n
     clear
 
-    self.mod._bodies.each do |ary|
+    self.model._bodies.each do |ary|
       draw_collection ary
     end
   end
@@ -210,27 +210,27 @@ class Graphics::AbstractSimulation
   # extras at the end.
 
   def update n
-    self.mod.n = n
-    self.mod._bodies.each do |ary|
-      ary.each(&:update)
-    end
+    self.model.n = n
+    self.model._bodies.each { |ary| ary.each(&:interact) }
+    self.model._bodies.each { |ary| ary.each(&:update) }
   end
 
   ##
   # Clear the whole screen
 
   def clear c = :black
-    canvas.fast_rect 0, 0, mod.w, mod.h, c
+    canvas.fast_rect 0, 0, model.w, model.h, c
   end
 
   ##
   # Add walls to simulation environment
 
   def add_walls
-    self.mod.lines << Wall.new(XY[0.0, 0.0],   XY[mod.w, 0.0])       \
-                   << Wall.new(XY[0.0, mod.h], XY[mod.w, mod.h]) \
-                   << Wall.new(XY[0.0, 0.0],   XY[0.0, mod.h])       \
-                   << Wall.new(XY[mod.w, 0.0], XY[mod.w, mod.h])
+    frame = [Wall.new(V.new(0.0, 0.0),   V.new(model.w, 0.0)),
+             Wall.new(V.new(0.0, model.h), V.new(model.w, model.h)),
+             Wall.new(V.new(0.0, 0.0),   V.new(0.0, model.h)),
+             Wall.new(V.new(model.w, 0.0), V.new(model.w, model.h))]
+    register_bodies frame
   end
 
   ### Blitting Methods:

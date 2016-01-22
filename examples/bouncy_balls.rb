@@ -1,55 +1,18 @@
-require '../lib/graphics.rb'
+require './lib/graphics.rb'
+require './lib/graphics/segment.rb'
+require './lib/graphics/dynamic.rb'
 
 class Ball < Graphics::Body
+  include Dynamic
+
   RADIO = 4
 
-  attr_accessor :c, :gravity, :neg_gravity
+  attr_accessor :c
 
   def initialize sim_env, grav = false
     super sim_env
-    if grav
-      self.gravity = mod.gravity
-      self.neg_gravity = gravity.reverse
-    end
-  end
 
-  ##
-  # Aggregated vector of forces that affect the body
-  # from interacting with all walls
-
-  def resultant
-    h = {}
-    seg1 = self.to_seg
-    i = mod.lines.each do |l|
-      h[i] = l if i = seg1.intersection_point_with(l)
-    end
-
-    unless h.empty?
-      i = h.keys.min { |i| position.distance_to i }
-      self.mod.z = i
-
-      return h[i].reaction_to(self)
-    end
-
-    nil
-  end
-
-  def update
-    if r = resultant
-      self.apply r
-      self.apply neg_gravity if gravity
-      # logg
-    else
-      self.apply mod.gravity if gravity
-      move
-    end
-  end
-
-  def logg
-    p m
-    p a
-    p position
-    puts "-"*20
+    self.acceleration = model.gravity if grav
   end
 
   class View
@@ -63,50 +26,44 @@ class Movie < Graphics::Simulation
   def initialize
     super 800, 800
 
-    self.mod.gravity = Graphics::V.new a: -90, m: 0.3
+    self.model.gravity = V.new_polar a= -90, m= 0.3
 
     add_walls
 
-    self.mod.lines << Wall.new(XY[200, 500], XY[600, 500])
-    self.mod.lines << Wall.new(XY[200, 500], XY[400, 700])
-    self.mod.lines << Wall.new(XY[600, 500], XY[400, 700])
+    triangle = [Wall.new(V[200, 500], V[600, 500]),
+                Wall.new(V[200, 500], V[400, 700]),
+                Wall.new(V[600, 500], V[400, 700])]
+    corners  = [Wall.new(V[150, 700], V[200, 700]),
+                Wall.new(V[200, 700], V[200, 650]),
+                Wall.new(V[150, 600], V[100, 600]),
+                Wall.new(V[100, 600], V[100, 650])]
 
-    self.mod.lines << Wall.new(XY[150, 700], XY[200, 700])
-    self.mod.lines << Wall.new(XY[200, 700], XY[200, 650])
-    self.mod.lines << Wall.new(XY[150, 600], XY[100, 600])
-    self.mod.lines << Wall.new(XY[100, 600], XY[100, 650])
+    register_bodies triangle
+    register_bodies corners
 
-    self.mod.z = nil
-
-    b0 = Ball.new self.mod, true
+    b0 = Ball.new self.model, true
     b0.x, b0.y = 400, 400
     b0.c = :red
-    b0.m = 0
-    b0.a = 0
 
-    b1 = Ball.new(self.mod)
+    b1 = Ball.new self.model
     b1.x, b1.y = 100, 200
     b1.c = :blue
-    b1.m = 15
-    b1.a = 40
+    b1.velocity = V.new_polar a = 40, m = 10
 
-    b2 = Ball.new(self.mod)
+    b2 = Ball.new self.model
     b2.x, b2.y = 400, 600
     b2.c = :green
-    b2.m = 5
-    b2.a = 130
+    b2.velocity = V.new_polar a = 130, m = 5
 
-    b3 = Ball.new(self.mod)
+    b3 = Ball.new self.model
     b3.x, b3.y = 100, 500
     b3.c = :yellow
-    b3.m = 2
-    b3.a = 0
+    b3.velocity = V.new_polar a = 0, m = 2
 
-    b4 = Ball.new(self.mod)
+    b4 = Ball.new self.model
     b4.x, b4.y = 150, 650
     b4.c = :red
-    b4.m = 3
-    b4.a = 45
+    b4.velocity = V.new_polar a = 44.5, m = 3
 
     register_bodies [b0, b1, b2, b3, b4]
   end
@@ -115,15 +72,15 @@ class Movie < Graphics::Simulation
     clear
 
     canvas.circle 400, 400, 8, :green
-    mod.lines.each { |l| canvas.line *l.point1, *l.point2, :red }
-    canvas.fps n, mod.start_time
+    model.lines.each { |l| canvas.line *l.point1, *l.point2, :red }
+    canvas.fps n, model.start_time
 
-    if mod.z
-      canvas.circle mod.z.x, mod.z.y, 10, :yellow
-      mod.z = nil
+    if model.z
+      canvas.circle model.z.x, model.z.y, 10, :yellow
+      model.z = nil
     end
 
-    self.mod._bodies.each do |ary|
+    self.model._bodies.each do |ary|
       draw_collection ary
     end
   end

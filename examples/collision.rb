@@ -1,8 +1,12 @@
 #!/usr/local/bin/ruby -w
 
-require "graphics"
+# require "graphics"
+require_relative "../lib/graphics"
+require './lib/graphics/dynamic.rb'
 
 class Tank < Graphics::Body
+  include Dynamic
+
   COUNT = 8
 
   attr_accessor :sprite, :cmap, :updated
@@ -10,8 +14,7 @@ class Tank < Graphics::Body
   def initialize e
     super e
 
-    self.a = random_angle
-    self.m = 5
+    self.velocity = V.new_polar rand(360), 5
     self.updated = false
   end
 
@@ -21,20 +24,22 @@ class Tank < Graphics::Body
   end
 
   def update
-    move(&:bounce)
+    move
     self.updated = false
   end
 
-  def detect
+  def interact
+    super
+
     if !self.updated
-      crashing = env._bodies.flatten.select { |t| collide_with? t }
+      crashing = model._bodies.flatten.select { |t| collide_with? t }
 
       crashing.each(&:veer) if crashing.size > 1
     end
   end
 
   def veer
-    turn 180
+    self.velocity *= -1
     self.updated = false
   end
 
@@ -44,10 +49,14 @@ class Tank < Graphics::Body
                     other.endpoint.x, other.endpoint.y
   end
 
+  def direction
+    velocity.cart_to_polar[:a]
+  end
+
   class View
     def self.draw w, o
-      w.blit o.sprite, o.x, o.y, o.a
-      w.fps o.env.n, o.env.start_time
+      w.blit o.sprite, o.x, o.y, o.direction
+      w.fps o.model.n, o.model.start_time
     end
   end
 end
@@ -56,15 +65,11 @@ class Collision < Graphics::Simulation
   def initialize
     super 800, 800, 16, "Collision"
 
+    add_walls
+
     tank_img = image "resources/images/body.png"
 
     register_bodies  populate(Tank) { |b| b.spritify tank_img }
-  end
-
-  def update n
-    env.n = n
-    env._bodies.each { |ary| ary.each(&:detect) }
-               .each { |ary| ary.each(&:update) }
   end
 
   def inspect

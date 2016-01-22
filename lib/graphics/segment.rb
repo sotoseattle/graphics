@@ -2,10 +2,14 @@
 # GIVE CREDIT HERE !!!!!
 #
 
-# require "graphics/xy"
-require_relative "./xy"
+class Segment
 
-class Segment < Struct.new :point1, :point2
+  attr_accessor :point1, :point2
+
+  def initialize a, b
+    self.point1 = a
+    self.point2 = b
+  end
 
   def leftmost_endpoint
     ((point1.x <=> point2.x) == -1) ? point1 : point2
@@ -30,7 +34,6 @@ class Segment < Struct.new :point1, :point2
   end
 
   def overlaps?(o)
-    # Segment.have_intersecting_bounds?(self, other) && # NOT CHECKING BEWARE
     o1 = Segment.new self.point1, o.point1
     o2 = Segment.new self.point1, o.point2
     (dot_product(o1) === 0) && (dot_product(o2) === 0)
@@ -50,10 +53,14 @@ class Segment < Struct.new :point1, :point2
     x1 = point1.x + t * (point2.x - point1.x)
     y1 = point1.y + t * (point2.y - point1.y)
 
-    XY[x1, y1]
+    V.new x1, y1
   end
 
-  protected
+  # TODO: make sure this is not needed
+  # def contains_point?(point)
+  #   Geometry.distance(point1, point2) ===
+  #     Geometry.distance(point1, point) + Geometry.distance(point, point2)
+  # end
 
   def self.have_intersecting_bounds?(segment1, segment2)
     intersects_on_x_axis =
@@ -91,3 +98,5 @@ class Segment < Struct.new :point1, :point2
     dx * ody - dy * odx
   end
 end
+
+

@@ -122,7 +122,7 @@ class Graphics::Simulation
   def initialize_rainbow rainbow, name
     rainbow.cache.each do |degree, color|
       color_name = "#{name}_#{degree}".to_sym
-      self.register_color(color_name, *color, 255)
+      canvas.register_color(color_name, *color, 255)
     end
   end
 end
