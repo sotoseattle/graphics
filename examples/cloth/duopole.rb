@@ -32,10 +32,11 @@ class Particle < Graphics::Body
 end
 
 class Bar
-  attr_accessor :parts
+  attr_accessor :parts, :span
 
   def initialize p1, p2
     self.parts = [p1, p2]
+    self.span = p1.position.distance_to p2
   end
 
   def vel= v
@@ -43,6 +44,16 @@ class Bar
   end
 
   def interact
+    unless parts.any? {|p| p.reaction(Wall) }
+      a, b = parts.first, parts.last
+      if a.velocity != b.velocity
+        seg = a.position - b.position
+        coll_a = seg.coll_projection(a.velocity)
+        coll_b = seg.coll_projection(b.velocity)
+        a.velocity = seg.perp_projection(a.velocity) + coll_b
+        b.velocity = seg.perp_projection(b.velocity) + coll_a
+      end
+    end
     parts.each(&:interact)
   end
 
@@ -80,7 +91,7 @@ class Nonesense < Graphics::Simulation
     b1 = Particle.new model, V[model.w/2 + 50, model.h/2 + 20]
 
     duo = Bar.new b0, b1
-    duo.vel = V[1, 0]
+    duo.vel = V[2, 0]
 
     register_bodies [duo]
 

@@ -20,16 +20,16 @@ module Dynamic
   ##
   # Intersection of vector and segment.
 
-  def intersection_point_with o
-    self.trajectory.intersection_point_with(o.trajectory)
+  def intersection_point_with segment, ojeto
+    segment.intersection_point_with(ojeto.trajectory)
   end
 
   ##
   # Resultant vector from closest interacting object.
 
-  def resultant_over klass
-    if bouncer = closest_interactor(possible_actors_of klass)
-      bouncer.reaction_to(self)
+  def reaction klass, path = self.trajectory
+    if obstacle = closest_interactor(path, possible_actors_of(klass))
+      obstacle.reaction_to(self)
     else
       nil
     end
@@ -39,12 +39,12 @@ module Dynamic
     model._bodies.select { |arr| arr.first.is_a? klass }.flatten
   end
 
-  def closest_interactor actors
+  def closest_interactor seg, actors
     min_dist = Float::MAX
     closest  = nil
 
     actors.each do |o|
-      if i = intersection_point_with(o)
+      if i = intersection_point_with(seg, o)
         dist = position.distance_to(i)
         if dist < min_dist
           min_dist = dist
@@ -61,8 +61,7 @@ module Dynamic
 
   def interact
     self.velocity += self.acceleration
-
-    while r = resultant_over(Wall)
+    while r = reaction(Wall)
       r += model.gravity if model.gravity
       self.velocity += r
     end
