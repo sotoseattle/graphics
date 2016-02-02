@@ -1,17 +1,19 @@
 #!/usr/local/bin/ruby -w
 
+require 'pry'
 # require "graphics"
 require_relative "../lib/graphics"
-require './lib/graphics/dynamic.rb'
+# require './lib/graphics/dynamic.rb'
+require './lib/graphics/verlety.rb'
 
 class Ball < Graphics::Body
-  include Dynamic
+  include Verlety
 
-  COUNT = 50
+  COUNT = 100
 
   def initialize model
     super
-    self.velocity = V[rand(9), 8-rand(9)]
+    self.velocity = V[rand(9), rand(9)]
     self.acceleration = model.gravity
   end
 
@@ -27,7 +29,7 @@ end
 class BounceSimulation < Graphics::Simulation
 
   def initialize
-    super 640, 640, 16, "Bounce"
+    super 800, 800, 16, "Bounce"
 
     self.model.gravity = V[0, -0.3]
 
@@ -36,26 +38,10 @@ class BounceSimulation < Graphics::Simulation
     register_bodies populate Ball
   end
 
-  def initialize_keys
+  def draw n
     super
-    add_keydown_handler " ", &:randomize
-    add_keydown_handler "r", &:reverse
+    canvas.fps n, model.start_time
   end
-
-  def randomize
-    self.model._bodies.each { |b| b.velocity = V[9 - rand(9), rand(9)] }
-  end
-
-  def reverse
-    self.model.gravity.turn 180
-  end
-
-  LOG_INTERVAL = 120
-
-  def log
-    # puts self.model._bodies.flatten.map(&:velocity).inject(&:+).magnitude
-  end
-
 end
 
 BounceSimulation.new.run

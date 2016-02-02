@@ -1,9 +1,9 @@
 require './lib/graphics.rb'
 require './lib/graphics/segment.rb'
-require './lib/graphics/dynamic.rb'
+require './lib/graphics/verlety.rb'
 
 class Ball < Graphics::Body
-  include Dynamic
+  include Verlety
 
   RADIO = 4
 
@@ -33,10 +33,11 @@ class Movie < Graphics::Simulation
     triangle = [Wall.new(V[200, 500], V[600, 500]),
                 Wall.new(V[200, 500], V[400, 700]),
                 Wall.new(V[600, 500], V[400, 700])]
-    corners  = [Wall.new(V[150, 700], V[200, 700]),
-                Wall.new(V[200, 700], V[200, 650]),
-                Wall.new(V[150, 600], V[100, 600]),
-                Wall.new(V[100, 600], V[100, 650])]
+    corners  = [
+                Wall.new(V[100, 600], V[100, 700]),
+                Wall.new(V[100, 700], V[200, 700]),
+                Wall.new(V[200, 700], V[200, 600]),
+                Wall.new(V[150, 600], V[100, 600])]
 
     register_bodies triangle
     register_bodies corners
@@ -63,7 +64,7 @@ class Movie < Graphics::Simulation
     b4 = Ball.new self.model
     b4.x, b4.y = 150, 650
     b4.c = :red
-    b4.velocity = V.new_polar a = 44.5, m = 3
+    b4.velocity = V[2,2]
 
     register_bodies [b0, b1, b2, b3, b4]
   end
